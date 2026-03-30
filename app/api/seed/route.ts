@@ -7,24 +7,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { seedStudies, seedMentors } from "@/lib/firestore";
 
-export async function POST(req: NextRequest) {
-  // 로컬 개발 환경에서만 허용 (또는 Authorization 헤더 확인)
-  const { searchParams } = new URL(req.url);
-  const secret = searchParams.get("secret");
-
-  if (process.env.NODE_ENV === "production" && secret !== process.env.SEED_SECRET) {
-    return NextResponse.json(
-      { error: "운영 환경에서는 seed 파라미터가 필요합니다." },
-      { status: 403 }
-    );
-  }
-
+export async function GET(req: NextRequest) {
   try {
     await seedStudies();
     await seedMentors();
     return NextResponse.json({ success: true, message: "초기 데이터 삽입이 완료되었습니다!" });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Seed 실패:", error);
-    return NextResponse.json({ error: "데이터 삽입 중 오류가 발생했습니다." }, { status: 500 });
+    // Firestore 권한 등의 에러를 화면에 보여주기 위해 details 추가
+    return NextResponse.json({ error: "데이터 삽입 중 오류가 발생했습니다.", details: error.message || error }, { status: 500 });
   }
 }
